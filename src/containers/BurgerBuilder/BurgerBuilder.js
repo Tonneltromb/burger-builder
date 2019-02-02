@@ -28,7 +28,7 @@ class BurgerBuilder extends Component {
     };
 
     componentDidMount() {
-        axios.get('https://burger-builder-ymatin.firebaseio.com/ingredients')
+        axios.get('/ingredients.json')
             .then(resp => {this.setState({ingredients: resp.data});})
             .catch(err => this.setState({error: false}));
     }
@@ -71,25 +71,16 @@ class BurgerBuilder extends Component {
     };
 
     purchaseContinueHandler = () => {
-        this.setState({loading: true});
-        // totalPrice must be calculated on server side
-        const order = {
-            ingredients: this.state.ingredients,
-            totalPrice: this.state.totalPrice,
-            customer: {
-                name: 'Yury Matin',
-                address: {
-                    street: 'Gagarina, 21',
-                    zipCode: '087345',
-                    country: 'Russia'
-                },
-                email: 'test@test.ru'
-            },
-            deliveryMethod: 'fastest'
-        };
-        axios.post('/orders.json', order)
-            .then(resp => this.setState({loading: false, purchasing: false}))
-            .catch(err => this.setState({loading: false, purchasing: false}));
+        const queryParams = [];
+        for(let i in this.state.ingredients) {
+            queryParams.push(encodeURIComponent(i) + '=' + encodeURIComponent(this.state.ingredients[i]));
+        }
+        queryParams.push('price=' + this.state.totalPrice);
+        const queryString = queryParams.join('&');
+        this.props.history.push({
+            pathname: '/checkout',
+            search: queryString
+        });
     };
 
     render() {
@@ -126,7 +117,6 @@ class BurgerBuilder extends Component {
 
         return (
             <Aux>
-
                 <Modal show={this.state.purchasing} modalClosed={this.purchaseCancelHandler}>
                     {orderSummary}
                 </Modal>
