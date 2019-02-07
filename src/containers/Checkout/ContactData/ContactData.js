@@ -10,12 +10,59 @@ import classes from './ContactData.css';
 
 class ContactData extends Component {
     state = {
-        name: '',
-        email: '',
-        address: {
-            street: '',
-            zipCode: ''
-        }
+        loading: false,
+        orderForm: {
+            name: {
+                elementType: 'input',
+                elementConfig: {
+                    type: 'text',
+                    placeholder: 'Your name'
+                },
+                value: ''
+            },
+            street: {
+                elementType: 'input',
+                elementConfig: {
+                    type: 'text',
+                    placeholder: 'Your street'
+                },
+                value: ''
+            },
+            zipCode: {
+                elementType: 'input',
+                elementConfig: {
+                    type: 'text',
+                    placeholder: 'ZIP CODE'
+                },
+                value: ''
+            },
+            country: {
+                elementType: 'input',
+                elementConfig: {
+                    type: 'text',
+                    placeholder: 'Your country'
+                },
+                value: ''
+            },
+            email: {
+                elementType: 'input',
+                elementConfig: {
+                    type: 'email',
+                    placeholder: 'Your EMail'
+                },
+                value: ''
+            },
+            deliveryMethod: {
+                elementType: 'select',
+                elementConfig: {
+                    options: [
+                        {value: 'fastest', displayValue: 'Fastest'},
+                        {value: 'cheapest', displayValue: 'Cheapest'}
+                    ]
+                },
+                value: ''
+            }
+        },
     };
     orderHandler = (event) => {
         event.preventDefault();
@@ -24,16 +71,6 @@ class ContactData extends Component {
         const order = {
             ingredients: this.props.ingredients,
             totalPrice: this.props.price,
-            customer: {
-                name: 'Yury Matin',
-                address: {
-                    street: 'Gagarina, 21',
-                    zipCode: '087345',
-                    country: 'Russia'
-                },
-                email: 'test@test.ru'
-            },
-            deliveryMethod: 'fastest'
         };
         axios.post('/orders.json', order)
             .then(resp => {
@@ -44,17 +81,30 @@ class ContactData extends Component {
     };
 
     render() {
+        const formElementsArray = [];
+        for(let key in this.state.orderForm) {
+            formElementsArray.push({
+                id: key,
+                config: this.state.orderForm[key]
+            });
+        }
+
         let form = (
-                <form action="">
-                    <Input inputtype='input' type="text" name="name" placeholder="Your name"/>
-                    <Input inputtype='input' type="text" name="email" placeholder="Your email"/>
-                    <Input inputtype='input' type="text" name="street" placeholder="Your street"/>
-                    <Input inputtype='input' type="text" name="zipCode" placeholder="Your zipCode"/>
-                    <Button buttonType="Success" clicked={this.orderHandler}>ORDER</Button>
-                </form>
+            <form action="">
+                {formElementsArray.map((formElement) => {
+                    return (
+                        <Input
+                            key={formElement.id}
+                            elementType={formElement.config.elementType}
+                            elementConfig={formElement.config.elementConfig}
+                            value={formElement.config.value} />
+                    );
+                })}
+                <Button buttonType="Success" clicked={this.orderHandler}>ORDER</Button>
+            </form>
         );
         if (this.state.loading) {
-            form = <Spinner />
+            form = <Spinner/>
         }
 
         return (
