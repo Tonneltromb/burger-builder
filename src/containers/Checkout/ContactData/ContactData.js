@@ -67,10 +67,14 @@ class ContactData extends Component {
     orderHandler = (event) => {
         event.preventDefault();
         this.setState({loading: true});
-        // totalPrice must be calculated on server side
+        const formData = {};
+        for (let inputIdentifier in this.state.orderForm){
+            formData[inputIdentifier] = this.state.orderForm[inputIdentifier].value;
+        }
         const order = {
             ingredients: this.props.ingredients,
             totalPrice: this.props.price,
+            orderData: formData
         };
         axios.post('/orders.json', order)
             .then(resp => {
@@ -78,6 +82,14 @@ class ContactData extends Component {
                 this.props.history.push('/');
             })
             .catch(err => this.setState({loading: false}));
+    };
+
+    inputChangedHandler = (event, inputIdentifier) => {
+        const updatedOrderForm = {...this.state.orderForm};
+        const updatedFormElement = {...updatedOrderForm[inputIdentifier]};
+        updatedFormElement.value = event.target.value;
+        updatedOrderForm[inputIdentifier] = updatedFormElement;
+        this.setState({orderForm: updatedOrderForm});
     };
 
     render() {
@@ -90,17 +102,18 @@ class ContactData extends Component {
         }
 
         let form = (
-            <form action="">
+            <form onSubmit={this.orderHandler}>
                 {formElementsArray.map((formElement) => {
                     return (
                         <Input
                             key={formElement.id}
                             elementType={formElement.config.elementType}
                             elementConfig={formElement.config.elementConfig}
-                            value={formElement.config.value} />
+                            value={formElement.config.value}
+                            changed={(event) => this.inputChangedHandler(event, formElement.id)}/>
                     );
                 })}
-                <Button buttonType="Success" clicked={this.orderHandler}>ORDER</Button>
+                <Button buttonType="Success">ORDER</Button>
             </form>
         );
         if (this.state.loading) {
