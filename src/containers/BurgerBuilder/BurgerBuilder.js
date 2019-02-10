@@ -1,4 +1,5 @@
 import React, {Component} from 'react';
+import {connect} from "react-redux";
 
 import axios from '../../axios-orders';
 
@@ -9,6 +10,8 @@ import Modal from '../../components/UI/Modal/Modal'
 import OrderSummary from '../../components/Burger/OrderSummary/OrderSummary';
 import Spinner from '../../components/UI/Spinner/Spinner';
 import withErrorHandler from '../../hoc/WithErrorHandler/WithErrorHandler';
+import * as actionTypes from '../../store/actions';
+
 
 const INGREDIENTS_PRICES = {
     salad: 0.3,
@@ -19,7 +22,6 @@ const INGREDIENTS_PRICES = {
 
 class BurgerBuilder extends Component {
     state = {
-        ingredients: null,
         purchasable: false,
         purchasing: false,
         totalPrice: 4,
@@ -28,9 +30,9 @@ class BurgerBuilder extends Component {
     };
 
     componentDidMount() {
-        axios.get('/ingredients.json')
-            .then(resp => {this.setState({ingredients: resp.data});})
-            .catch(err => this.setState({error: false}));
+        // axios.get('/ingredients.json')
+        //     .then(resp => {this.setState({ingredients: resp.data});})
+        //     .catch(err => this.setState({error: false}));
     }
 
     updatePurchase(ingredients) {
@@ -72,8 +74,8 @@ class BurgerBuilder extends Component {
 
     purchaseContinueHandler = () => {
         const queryParams = [];
-        for(let i in this.state.ingredients) {
-            queryParams.push(encodeURIComponent(i) + '=' + encodeURIComponent(this.state.ingredients[i]));
+        for(let i in this.props.ingredients) {
+            queryParams.push(encodeURIComponent(i) + '=' + encodeURIComponent(this.props.ingredients[i]));
         }
         queryParams.push('price=' + this.state.totalPrice);
         const queryString = queryParams.join('&');
@@ -84,20 +86,20 @@ class BurgerBuilder extends Component {
     };
 
     render() {
-        const disabledInfo = {...this.state.ingredients};
+        const disabledInfo = {...this.props.ingredients};
         for (let key in disabledInfo) {
             disabledInfo[key] = disabledInfo[key] <= 0;
         }
 
         let orderSummary = null;
         let burger = this.state.error ? <p>Ingredients loading error</p> : <Spinner/>;
-        if (this.state.ingredients) {
+        if (this.props.ingredients) {
             burger = (
                 <Aux>
-                    <Burger ingredients={this.state.ingredients}/>
+                    <Burger ingredients={this.props.ingredients}/>
                     <BuildControls
-                        ingredientAdded={this.addIngredientHandler}
-                        ingredientRemoved={this.removeIngredientHandler}
+                        ingredientAdded={this.props.onIngredientAdded}
+                        ingredientRemoved={this.props.onIngredientRemoved}
                         disabledInfo={disabledInfo}
                         purchasable={this.state.purchasable}
                         totalPrice={this.state.totalPrice}
@@ -105,7 +107,7 @@ class BurgerBuilder extends Component {
                 </Aux>
             );
             orderSummary = <OrderSummary
-                ingredients={this.state.ingredients}
+                ingredients={this.props.ingredients}
                 totalPrice={this.state.totalPrice}
                 purchaseCancelled={this.purchaseCancelHandler}
                 purchaseContinued={this.purchaseContinueHandler}/>;
@@ -126,4 +128,17 @@ class BurgerBuilder extends Component {
     }
 }
 
-export default withErrorHandler(BurgerBuilder, axios);
+const mapStateToProps = (state) => {
+    return {
+        ingredients: state.ingredients
+    }
+};
+
+const mapDispatchToProps = (dispatch) => {
+    return {
+        onIngredientAdded: (ingredientName) => dispatch({type: actionTypes.ADD_INGREDOIENT, ingredientName: ingredientName}),
+        onIngredientRemoved: (ingredientName) => dispatch({type: actionTypes.REMOVE_INGREDOIENT, ingredientName: ingredientName}),
+    }
+};
+
+export default connect(mapStateToProps, mapDispatchToProps)(withErrorHandler(BurgerBuilder, axios));
